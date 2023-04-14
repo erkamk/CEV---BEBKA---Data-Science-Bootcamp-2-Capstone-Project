@@ -101,11 +101,13 @@ while(True):
     if ret == False: break
 
     face_result = model_face_yolo(frame)
+    # kaza riski 36-40, 41-45 aynı yap
     try:
         boxes = face_result.xyxy[0].numpy()
         people_x2y2 = np.sum(boxes[:,2:4], axis=1)
         index_of_driver = np.argmax(people_x2y2)
         x0, y0, x1, y1, _, _ = boxes[index_of_driver].astype(int) 
+        #x0, y0, x1, y1, _, _ = face_result.xyxy[0][0].numpy().astype(int)         
     except:
         pass
     else:
@@ -134,16 +136,6 @@ while(True):
         drowsy_queue.append(eye_dictionary[predicted_index_eye]) 
         
         
-        if len(drowsy_queue) >= FPS*3:
-            if drowsy_queue.count("Open") < drowsy_queue.count("Close") * 4:
-                cv2.putText(frame, "Drowsy   : True", (25, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
-                crash_prob += 0.3
-            else:
-                cv2.putText(frame, "Drowsy   : False", (25, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
-                
-        if len(sleeping_queue) == (FPS*5):
-            if drowsy_queue.count("Open") < drowsy_queue.count("Close") * 5:
-                crash_prob = 1.0
 
 
     
@@ -152,6 +144,7 @@ while(True):
         cv2.putText(frame, "DRIVER", (driver_x, y1-15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 3)
         cv2.putText(frame, f'Eyes          : {eye_dictionary[predicted_index_eye]}', (25, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
         cv2.putText(frame, f'Age Pred.     : {age_dictionary[predicted_index_age][0]}', (25, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
+        #cv2.putText(frame, f'Emotion Pred. : {emotion_dictionary[predicted_index_emotion]}', (25, 95), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 100, 255),thickness = 2)
 
         if predicted_emotion_max >= 0.8:
             cv2.putText(frame, f'Emotion Pred. : {emotion_dictionary[predicted_index_emotion][0]}', (25, 95), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
@@ -159,8 +152,22 @@ while(True):
         else:
            cv2.putText(frame, "Emotion Pred. : Neutral", (25, 95), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
 
+        if len(drowsy_queue) >= FPS*2:
+            if drowsy_queue.count("Open") < drowsy_queue.count("Closed")*3:
+                cv2.putText(frame, "Drowsy   : True", (25, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
+                crash_prob += 0.3
+            else:
+                cv2.putText(frame, "Drowsy   : False", (25, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
+                
+        if len(sleeping_queue) >= (FPS*4):
+            if drowsy_queue.count("Open") < drowsy_queue.count("Closed") * 3:
+                crash_prob = 1.0
+
         cv2.putText(frame, f'Crash Prob.     : {crash_prob:.2f}', (25, 165), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),thickness = 2)
 
+        
+        #cv2.putText(frame, f'{age_dictionary[predicted_index_age]}', (10,10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 500, 500))
+        #cv2.putText(frame, f'{eye_dictionary[predicted_index_eye]}', (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 500, 500))
         start_point = (x0, y0)
         end_point = (x1, y1)
         cv2.rectangle(frame, start_point, end_point, (0,255,0), 2)
