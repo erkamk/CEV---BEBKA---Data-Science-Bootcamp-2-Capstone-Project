@@ -101,7 +101,6 @@ while(True):
     if ret == False: break
 
     face_result = model_face_yolo(frame)
-    # kaza riski 36-40, 41-45 aynı yap
     try:
         boxes = face_result.xyxy[0].numpy()
         people_x2y2 = np.sum(boxes[:,2:4], axis=1)
